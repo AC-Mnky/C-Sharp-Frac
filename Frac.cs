@@ -98,11 +98,11 @@ public class Frac
         simplify();
     }
 
-    private Frac(BigInteger x, BigInteger y, bool should_simplify) // 如果 should_simplify 为 false，则只保证分母非负，不保证与分子互素
+    private Frac(BigInteger x, BigInteger y, bool shouldSimplify) // 如果 shouldSimplify 为 false，则只保证分母非负，不保证与分子互素
     {
         this.x = x;
         this.y = y;
-        if (should_simplify)
+        if (shouldSimplify)
         {
             simplify();
         }
@@ -113,17 +113,17 @@ public class Frac
         }
     }
 
-    public Frac reciprocal()
+    public Frac Reciprocal()
     {
         return new Frac(y, x, false);
     }
 
-    public Frac neg()
+    public Frac Neg()
     {
         return new Frac(-x, y, false);
     }
 
-    public Frac mul(Frac other)
+    public Frac Mul(Frac other)
     {
         var gcd1 = BigIntegerExtensions.GCD(x, other.y);
         var gcd2 = BigIntegerExtensions.GCD(other.x, y);
@@ -134,12 +134,12 @@ public class Frac
         return new Frac((x / gcd1) * (other.x / gcd2), (y / gcd2) * (other.y / gcd1), false);
     }
 
-    public Frac div(Frac other)
+    public Frac Div(Frac other)
     {
-        return mul(other.reciprocal());
+        return Mul(other.Reciprocal());
     }
 
-    public Frac add(Frac other)
+    public Frac Add(Frac other)
     {
         var gcd = BigIntegerExtensions.GCD(y, other.y);
         if (gcd.IsZero)
@@ -159,39 +159,91 @@ public class Frac
         return new Frac(numerator, denominator, true); // 必须simplify，因为显然会有 1/2 + 1/2 = 1 这种情况
     }
 
-    public Frac sub(Frac other)
+    public Frac Sub(Frac other)
     {
-        return add(other.neg());
+        return Add(other.Neg());
     }
 
-    public Frac add(BigInteger other)
+    public Frac Add(BigInteger other)
     {
         return new Frac(x + other * y, y, false);
     }
 
-    public Frac sub(BigInteger other)
+    public Frac Sub(BigInteger other)
     {
         return new Frac(x - other * y, y, false);
     }
 
-    public Frac mul(BigInteger other)
+    public Frac Mul(BigInteger other)
     {
-        return mul(new Frac(other));
+        return Mul(new Frac(other));
     }
 
-    public Frac div(BigInteger other)
+    public Frac Div(BigInteger other)
     {
-        return div(new Frac(other));
+        return Div(new Frac(other));
     }
 
-    public bool isLegal()
+    public bool IsLegal()
     {
         return !y.IsZero;
     }
 
-    public bool isInteger()
+    public bool IsInteger()
     {
         return y.IsOne;
+    }
+
+    public bool IsNaN()
+    {
+        return y.IsZero && x.IsZero;
+    }
+
+    private static bool equalsCore(Frac a, Frac b)
+    {
+        if (ReferenceEquals(a, b)) return true;
+        if (a is null || b is null) return false;
+        bool aNaN = a.y.IsZero && a.x.IsZero;
+        bool bNaN = b.y.IsZero && b.x.IsZero;
+        if (aNaN || bNaN) return false;
+        return a.x == b.x && a.y == b.y;
+    }
+
+    private static int compareNonNaN(Frac a, Frac b)
+    {
+        bool aInf = a.y.IsZero;
+        bool bInf = b.y.IsZero;
+        if (aInf || bInf)
+        {
+            if (aInf && bInf)
+            {
+                if (a.x == b.x) return 0;
+                return a.x > b.x ? 1 : -1;
+            }
+            if (aInf) return a.x > 0 ? 1 : -1;
+            return b.x > 0 ? -1 : 1;
+        }
+        var left = a.x * b.y;
+        var right = b.x * a.y;
+        return left.CompareTo(right);
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj is Frac other) return equalsCore(this, other);
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            int hash = 17;
+            hash = hash * 31 + x.GetHashCode();
+            hash = hash * 31 + y.GetHashCode();
+            return hash;
+        }
     }
 
     public override string ToString()
@@ -212,48 +264,156 @@ public class Frac
         return x.ToString() + "/" + y.ToString();
     }
 
+    public static bool operator ==(Frac a, Frac b)
+    {
+        return equalsCore(a, b);
+    }
+
+    public static bool operator !=(Frac a, Frac b)
+    {
+        return !equalsCore(a, b);
+    }
+
+    public static bool operator ==(Frac a, BigInteger b)
+    {
+        return equalsCore(a, new Frac(b));
+    }
+
+    public static bool operator ==(BigInteger a, Frac b)
+    {
+        return equalsCore(new Frac(a), b);
+    }
+
+    public static bool operator !=(Frac a, BigInteger b)
+    {
+        return !(a == b);
+    }
+
+    public static bool operator !=(BigInteger a, Frac b)
+    {
+        return !(a == b);
+    }
+
+    public static bool operator >(Frac a, Frac b)
+    {
+        if (a is null || b is null) return false;
+        bool aNaN = a.y.IsZero && a.x.IsZero;
+        bool bNaN = b.y.IsZero && b.x.IsZero;
+        if (aNaN || bNaN) return false;
+        return compareNonNaN(a, b) > 0;
+    }
+
+    public static bool operator <(Frac a, Frac b)
+    {
+        if (a is null || b is null) return false;
+        bool aNaN = a.y.IsZero && a.x.IsZero;
+        bool bNaN = b.y.IsZero && b.x.IsZero;
+        if (aNaN || bNaN) return false;
+        return compareNonNaN(a, b) < 0;
+    }
+
+    public static bool operator >=(Frac a, Frac b)
+    {
+        if (a is null || b is null) return false;
+        bool aNaN = a.y.IsZero && a.x.IsZero;
+        bool bNaN = b.y.IsZero && b.x.IsZero;
+        if (aNaN || bNaN) return false;
+        if (equalsCore(a, b)) return true;
+        return compareNonNaN(a, b) > 0;
+    }
+
+    public static bool operator <=(Frac a, Frac b)
+    {
+        if (a is null || b is null) return false;
+        bool aNaN = a.y.IsZero && a.x.IsZero;
+        bool bNaN = b.y.IsZero && b.x.IsZero;
+        if (aNaN || bNaN) return false;
+        if (equalsCore(a, b)) return true;
+        return compareNonNaN(a, b) < 0;
+    }
+
+    public static bool operator >(Frac a, BigInteger b)
+    {
+        return a > new Frac(b);
+    }
+
+    public static bool operator >(BigInteger a, Frac b)
+    {
+        return new Frac(a) > b;
+    }
+
+    public static bool operator <(Frac a, BigInteger b)
+    {
+        return a < new Frac(b);
+    }
+
+    public static bool operator <(BigInteger a, Frac b)
+    {
+        return new Frac(a) < b;
+    }
+
+    public static bool operator >=(Frac a, BigInteger b)
+    {
+        return a >= new Frac(b);
+    }
+
+    public static bool operator >=(BigInteger a, Frac b)
+    {
+        return new Frac(a) >= b;
+    }
+
+    public static bool operator <=(Frac a, BigInteger b)
+    {
+        return a <= new Frac(b);
+    }
+
+    public static bool operator <=(BigInteger a, Frac b)
+    {
+        return new Frac(a) <= b;
+    }
+
     public static Frac operator +(Frac a, Frac b)
     {
-        return a.add(b);
+        return a.Add(b);
     }
 
     public static Frac operator +(Frac a, BigInteger b)
     {
-        return a.add(b);
+        return a.Add(b);
     }
 
     public static Frac operator +(BigInteger a, Frac b)
     {
-        return b.add(a);
+        return b.Add(a);
     }
 
     public static Frac operator -(Frac a, Frac b)
     {
-        return a.sub(b);
+        return a.Sub(b);
     }
 
     public static Frac operator -(Frac a, BigInteger b)
     {
-        return a.sub(b);
+        return a.Sub(b);
     }
 
     public static Frac operator -(BigInteger a, Frac b)
     {
-        return b.sub(a).neg();
+        return b.Sub(a).Neg();
     }
 
     public static Frac operator *(Frac a, Frac b)
     {
-        return a.mul(b);
+        return a.Mul(b);
     }
 
     public static Frac operator *(Frac a, BigInteger b)
     {
-        return a.mul(b);
+        return a.Mul(b);
     }
 
     public static Frac operator *(BigInteger a, Frac b)
     {
-        return b.mul(a);
+        return b.Mul(a);
     }
 }

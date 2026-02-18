@@ -68,21 +68,21 @@ Frac 是一个基于 `System.Numerics.BigInteger` 的有理数类型，支持无
 
 倒数与相反数：
 
-- `Frac reciprocal()`  
+- `Frac Reciprocal()`  
   - 返回 `y/x`，使用内部构造 `new Frac(y, x, false)`。
   - 对于普通有理数 `a/b`，得到 `b/a`。
   - 对于 `0`（如 `0/1`），得到 `+inf`（`1/0`）。
   - 对于 `+inf`（`1/0`），得到 `0`（`0/1`）。
   - 对于 NaN（`0/0`），结果仍然是 NaN（`0/0`）。
 
-- `Frac neg()`  
+- `Frac Neg()`  
   - 返回 `-x/y`，使用 `new Frac(-x, y, false)`。
   - 无论普通数还是特殊值，都仅改变符号。
 
 乘法与除法（Frac 与 Frac）
 --------------------------
 
-- `Frac mul(Frac other)`  
+- `Frac Mul(Frac other)`  
   - 乘法前会做一次“交叉约分”，避免数值过大：
     - `gcd1 = GCD(x, other.y)`
     - `gcd2 = GCD(other.x, y)`
@@ -92,16 +92,16 @@ Frac 是一个基于 `System.Numerics.BigInteger` 的有理数类型，支持无
     - 分母：`(y / gcd2) * (other.y / gcd1)`
     - 构造：`new Frac(..., ..., false)`（约分靠之前 GCD）。
 
-- `Frac div(Frac other)`  
-  - 定义为 `mul(other.reciprocal())`。
-  - 结合 `reciprocal()` 和 `mul()` 的逻辑，可以表示：
+- `Frac Div(Frac other)`  
+  - 定义为 `Mul(other.Reciprocal())`。
+  - 结合 `Reciprocal()` 和 `Mul()` 的逻辑，可以表示：
     - `a / 0` → ±∞ 或 NaN（根据符号和后续运算）。
     - `0 / 0` → NaN。
 
 加法与减法（Frac 与 Frac）
 -------------------------
 
-- `Frac add(Frac other)`  
+- `Frac Add(Frac other)`  
   - 计算 `gcd = GCD(y, other.y)`。
   - 若 `gcd == 0`（两者分母都为 0）：
     - 若 `x == 1` 且 `other.x == 1` → `+inf`（`new Frac(1, 0, false)`）
@@ -114,33 +114,36 @@ Frac 是一个基于 `System.Numerics.BigInteger` 的有理数类型，支持无
     - `denominator = (y / gcd) * other.y`
     - 使用 `new Frac(numerator, denominator, true)`，必须约分以处理如 `1/2 + 1/2 = 1`。
 
-- `Frac sub(Frac other)`  
-  - 定义为 `add(other.neg())`。
+- `Frac Sub(Frac other)`  
+  - 定义为 `Add(other.Neg())`。
 
 与 BigInteger 的运算
 --------------------
 
 这些方法提供 Frac 与整数之间的便捷操作：
 
-- `Frac add(BigInteger other)`  
+- `Frac Add(BigInteger other)`  
   - 计算 `x + other * y`，分母保持 `y`。
-- `Frac sub(BigInteger other)`  
+- `Frac Sub(BigInteger other)`  
   - 计算 `x - other * y`。
-- `Frac mul(BigInteger other)`  
-  - 调用 `mul(new Frac(other))`。
-- `Frac div(BigInteger other)`  
-  - 调用 `div(new Frac(other))`。
+- `Frac Mul(BigInteger other)`  
+  - 调用 `Mul(new Frac(other))`。
+- `Frac Div(BigInteger other)`  
+  - 调用 `Div(new Frac(other))`。
 
-合法性与整数判断
-----------------
+合法性、整数与 NaN 判断
+----------------------
 
-- `bool isLegal()`  
+- `bool IsLegal()`  
   - 返回 `!y.IsZero`，即分母非 0 时为合法有理数。
   - 对于 NaN 和 ±∞（分母为 0），返回 `false`。
 
-- `bool isInteger()`  
+- `bool IsInteger()`  
   - 返回 `y.IsOne`，即分母为 1 时为整数。
   - 对于分母 0 的特殊值，返回 `false`。
+
+- `bool IsNaN()`  
+  - 返回 `x == 0 && y == 0`，用于判断当前值是否为 NaN。
 
 字符串表示
 ----------
@@ -160,19 +163,27 @@ Frac 是一个基于 `System.Numerics.BigInteger` 的有理数类型，支持无
 Frac 提供若干操作符重载，全部委托给前面定义的实例方法：
 
 - 加法：
-  - `static Frac operator +(Frac a, Frac b)` → `a.add(b)`
-  - `static Frac operator +(Frac a, BigInteger b)` → `a.add(b)`
-  - `static Frac operator +(BigInteger a, Frac b)` → `b.add(a)`
+  - `static Frac operator +(Frac a, Frac b)` → `a.Add(b)`
+  - `static Frac operator +(Frac a, BigInteger b)` → `a.Add(b)`
+  - `static Frac operator +(BigInteger a, Frac b)` → `b.Add(a)`
 
 - 减法：
-  - `static Frac operator -(Frac a, Frac b)` → `a.sub(b)`
-  - `static Frac operator -(Frac a, BigInteger b)` → `a.sub(b)`
-  - `static Frac operator -(BigInteger a, Frac b)` → `b.sub(a).neg()`
+  - `static Frac operator -(Frac a, Frac b)` → `a.Sub(b)`
+  - `static Frac operator -(Frac a, BigInteger b)` → `a.Sub(b)`
+  - `static Frac operator -(BigInteger a, Frac b)` → `b.Sub(a).Neg()`
 
 - 乘法：
-  - `static Frac operator *(Frac a, Frac b)` → `a.mul(b)`
-  - `static Frac operator *(Frac a, BigInteger b)` → `a.mul(b)`
-  - `static Frac operator *(BigInteger a, Frac b)` → `b.mul(a)`
+  - `static Frac operator *(Frac a, Frac b)` → `a.Mul(b)`
+  - `static Frac operator *(Frac a, BigInteger b)` → `a.Mul(b)`
+  - `static Frac operator *(BigInteger a, Frac b)` → `b.Mul(a)`
+
+- 相等与比较：
+  - `static bool operator ==(Frac a, Frac b)`：按数值判断有理数是否相等；NaN 与任何值都不相等。
+  - `static bool operator !=(Frac a, Frac b)`：等价于 `!(a == b)`。
+  - `static bool operator >(Frac a, Frac b)` / `<` / `>=` / `<=`：按有理数大小比较，支持 ±∞。
+  - 同时提供 `Frac` 与 `BigInteger` 之间的 `==, !=, >, <, >=, <=` 运算符，方便写出 `frac > 1`、`2 <= frac` 等表达式。
+
+在 C# 中，`+=`、`-=`、`*=` 等复合赋值运算会自动使用上面的 `+`、`-`、`*` 运算符，因此本类型无需额外定义 `operator +=` 等函数即可直接使用，例如 `a += b`、`a *= (BigInteger)2`。注意本类型没有支持除法复合赋值 `/=`。
 
 示例
 ----
@@ -187,8 +198,17 @@ Frac 提供若干操作符重载，全部委托给前面定义的实例方法：
 
 - `new Frac(1, 2) + new Frac(1, 3)` → `5/6`
 - `new Frac(1, 2) * new Frac(2, 3)` → `1/3`
-- `new Frac(3, 2).isInteger()` → `false`
-- `new Frac(4, 2).isInteger()` → `true`
+- `new Frac(3, 2).IsInteger()` → `false`
+- `new Frac(4, 2).IsInteger()` → `true`
+
+复合赋值与比较运算示例：
+
+- `var a = new Frac(1, 2); var b = new Frac(1, 3); a += b;` → `a == 5/6`
+- `var c = new Frac(1, 2); c *= (BigInteger)2;` → `c == 1`
+- `new Frac(1, 2) > new Frac(1, 3)` → `true`
+- `new Frac(1, 2) == new Frac(2, 4)` → `true`
+- `new Frac(1, 0) > new Frac(0, 1)` → `true`（`+inf` 大于任意有限数）
+- `var nan = new Frac(0, 0);` 中，`nan == nan` 为 `false`，`nan != nan` 为 `true`，`nan.IsNaN()` 为 `true`，且所有 `<, >, <=, >=` 比较都为 `false`。
 
 特殊值示例：
 
