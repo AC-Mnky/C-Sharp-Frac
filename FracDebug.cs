@@ -28,6 +28,8 @@ public class FracDebug : MonoBehaviour
         TestOperators();
         TestCompoundAssignments();
         TestComparisonOperators();
+        TestToDoubleAndFloat();
+        TestToBigIntegerConversion();
     }
 
     private static void AssertEqual(Frac actual, Frac expected, string message)
@@ -51,6 +53,76 @@ public class FracDebug : MonoBehaviour
         if (actual != expected)
         {
             throw new Exception("FracDebug bool not equal: " + message + ", expected " + expected + ", actual " + actual);
+        }
+    }
+
+    private static void AssertEqualDouble(double actual, double expected, string message)
+    {
+        if (double.IsNaN(expected))
+        {
+            if (!double.IsNaN(actual))
+            {
+                throw new Exception("FracDebug double not NaN as expected: " + message + ", actual " + actual);
+            }
+            return;
+        }
+
+        if (double.IsPositiveInfinity(expected))
+        {
+            if (!double.IsPositiveInfinity(actual))
+            {
+                throw new Exception("FracDebug double not +inf as expected: " + message + ", actual " + actual);
+            }
+            return;
+        }
+
+        if (double.IsNegativeInfinity(expected))
+        {
+            if (!double.IsNegativeInfinity(actual))
+            {
+                throw new Exception("FracDebug double not -inf as expected: " + message + ", actual " + actual);
+            }
+            return;
+        }
+
+        if (actual != expected)
+        {
+            throw new Exception("FracDebug double not equal: " + message + ", expected " + expected + ", actual " + actual);
+        }
+    }
+
+    private static void AssertEqualFloat(float actual, float expected, string message)
+    {
+        if (float.IsNaN(expected))
+        {
+            if (!float.IsNaN(actual))
+            {
+                throw new Exception("FracDebug float not NaN as expected: " + message + ", actual " + actual);
+            }
+            return;
+        }
+
+        if (float.IsPositiveInfinity(expected))
+        {
+            if (!float.IsPositiveInfinity(actual))
+            {
+                throw new Exception("FracDebug float not +inf as expected: " + message + ", actual " + actual);
+            }
+            return;
+        }
+
+        if (float.IsNegativeInfinity(expected))
+        {
+            if (!float.IsNegativeInfinity(actual))
+            {
+                throw new Exception("FracDebug float not -inf as expected: " + message + ", actual " + actual);
+            }
+            return;
+        }
+
+        if (actual != expected)
+        {
+            throw new Exception("FracDebug float not equal: " + message + ", expected " + expected + ", actual " + actual);
         }
     }
 
@@ -602,6 +674,113 @@ public class FracDebug : MonoBehaviour
         AssertEqualBool(nan1 < zero, false, "operator < nan<0 is false");
         AssertEqualBool(nan1 >= zero, false, "operator >= nan>=0 is false");
         AssertEqualBool(nan1 <= zero, false, "operator <= nan<=0 is false");
+    }
+
+    private static void TestToDoubleAndFloat()
+    {
+        var a = new Frac(1, 2);
+        AssertEqualDouble(a.ToDouble(), 0.5, "ToDouble 1/2");
+        AssertEqualFloat(a.ToFloat(), 0.5f, "ToFloat 1/2");
+
+        var b = new Frac(3, 1);
+        AssertEqualDouble(b.ToDouble(), 3.0, "ToDouble 3");
+        AssertEqualFloat(b.ToFloat(), 3.0f, "ToFloat 3");
+
+        var c = new Frac(-5, 2);
+        AssertEqualDouble(c.ToDouble(), -2.5, "ToDouble -5/2");
+        AssertEqualFloat(c.ToFloat(), -2.5f, "ToFloat -5/2");
+
+        var zero = new Frac(0, 1);
+        AssertEqualDouble(zero.ToDouble(), 0.0, "ToDouble 0");
+        AssertEqualFloat(zero.ToFloat(), 0.0f, "ToFloat 0");
+
+        var posInf = new Frac(1, 0);
+        AssertEqualDouble(posInf.ToDouble(), double.PositiveInfinity, "ToDouble +inf");
+        AssertEqualFloat(posInf.ToFloat(), float.PositiveInfinity, "ToFloat +inf");
+
+        var negInf = new Frac(-1, 0);
+        AssertEqualDouble(negInf.ToDouble(), double.NegativeInfinity, "ToDouble -inf");
+        AssertEqualFloat(negInf.ToFloat(), float.NegativeInfinity, "ToFloat -inf");
+
+        var nan = new Frac(0, 0);
+        AssertEqualDouble(nan.ToDouble(), double.NaN, "ToDouble nan");
+        AssertEqualFloat(nan.ToFloat(), float.NaN, "ToFloat nan");
+    }
+
+    private static void TestToBigIntegerConversion()
+    {
+        var a = new Frac(5);
+        if (a.ToBigInteger() != new BigInteger(5))
+        {
+            throw new Exception("ToBigInteger integer 5");
+        }
+
+        var b = new Frac(5, 3);
+        if (b.ToBigInteger() != new BigInteger(1))
+        {
+            throw new Exception("ToBigInteger 5/3 -> 1");
+        }
+
+        var c = new Frac(-5, 3);
+        if (c.ToBigInteger() != new BigInteger(-2))
+        {
+            throw new Exception("ToBigInteger -5/3 -> -2");
+        }
+
+        var d = new Frac(1, 2);
+        if (d.ToBigInteger() != new BigInteger(0))
+        {
+            throw new Exception("ToBigInteger 1/2 -> 0");
+        }
+
+        var e = new Frac(-1, 2);
+        if (e.ToBigInteger() != new BigInteger(-1))
+        {
+            throw new Exception("ToBigInteger -1/2 -> -1");
+        }
+
+        var zero = new Frac(0, 1);
+        if (zero.ToBigInteger() != BigInteger.Zero)
+        {
+            throw new Exception("ToBigInteger 0 -> 0");
+        }
+
+        var posInf = new Frac(1, 0);
+        var negInf = new Frac(-1, 0);
+        var nan = new Frac(0, 0);
+
+        var threwPosInf = false;
+        try
+        {
+            posInf.ToBigInteger();
+        }
+        catch
+        {
+            threwPosInf = true;
+        }
+        AssertEqualBool(threwPosInf, true, "ToBigInteger +inf throws");
+
+        var threwNegInf = false;
+        try
+        {
+            negInf.ToBigInteger();
+        }
+        catch
+        {
+            threwNegInf = true;
+        }
+        AssertEqualBool(threwNegInf, true, "ToBigInteger -inf throws");
+
+        var threwNan = false;
+        try
+        {
+            nan.ToBigInteger();
+        }
+        catch
+        {
+            threwNan = true;
+        }
+        AssertEqualBool(threwNan, true, "ToBigInteger nan throws");
     }
 }
 

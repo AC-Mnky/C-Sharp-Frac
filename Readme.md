@@ -145,6 +145,25 @@ Frac 是一个基于 `System.Numerics.BigInteger` 的有理数类型，支持无
 - `bool IsNaN()`  
   - 返回 `x == 0 && y == 0`，用于判断当前值是否为 NaN。
 
+转换与取整
+----------
+
+- `double ToDouble()`  
+  - 若为普通有理数（`IsLegal() == true`），返回 `((double)x) / ((double)y)` 的值。
+  - 若为 `+inf`（`1/0`），返回 `double.PositiveInfinity`。
+  - 若为 `-inf`（`-1/0`），返回 `double.NegativeInfinity`。
+  - 若为 NaN（`0/0`），返回 `double.NaN`。
+
+- `float ToFloat()`  
+  - 等价于对 `ToDouble()` 的结果再做一次 `(float)` 强制转换。
+  - 同样会将 `+inf/-inf/nan` 映射到对应的 `float` 特殊值。
+
+- `BigInteger ToBigInteger()`  
+  - 仅对有限值定义（`IsLegal() == true`），否则抛出异常。
+  - 若 `IsInteger() == true`，直接返回分子 `x`。
+  - 若不是整数，则返回向负无穷取整后的结果：
+    - 例如 `5/3` → `1`，`-5/3` → `-2`，`-1/2` → `-1`。
+
 字符串表示
 ----------
 

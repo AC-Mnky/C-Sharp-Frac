@@ -199,6 +199,49 @@ public class Frac
         return y.IsZero && x.IsZero;
     }
 
+    public double ToDouble()
+    {
+        if (y.IsZero)
+        {
+            if (x.IsZero) return double.NaN;
+            if (x.Sign > 0) return double.PositiveInfinity;
+            return double.NegativeInfinity;
+        }
+
+        return (double)x / (double)y;
+    }
+
+    public float ToFloat()
+    {
+        return (float)ToDouble();
+    }
+
+    public BigInteger ToBigInteger()
+    {
+        if (!IsLegal())
+        {
+            throw new Exception("Frac.ToBigInteger called on non-finite value");
+        }
+
+        if (IsInteger())
+        {
+            return x;
+        }
+
+        var quotient = BigInteger.DivRem(x, y, out var remainder);
+        if (remainder.IsZero)
+        {
+            return quotient;
+        }
+
+        if (x.Sign < 0)
+        {
+            return quotient - BigInteger.One;
+        }
+
+        return quotient;
+    }
+
     private static bool equalsCore(Frac a, Frac b)
     {
         if (ReferenceEquals(a, b)) return true;
