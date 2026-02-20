@@ -41,7 +41,7 @@ public static class BigIntegerExtensions
     }
 }
 
-public class Frac
+public struct Frac
 {
     // 所有public方法输出的Frac对象都保证分母非负且与分子互素
     private BigInteger x;
@@ -244,8 +244,6 @@ public class Frac
 
     private static bool equalsCore(Frac a, Frac b)
     {
-        if (ReferenceEquals(a, b)) return true;
-        if (a is null || b is null) return false;
         bool aNaN = a.y.IsZero && a.x.IsZero;
         bool bNaN = b.y.IsZero && b.x.IsZero;
         if (aNaN || bNaN) return false;
@@ -273,7 +271,6 @@ public class Frac
 
     public override bool Equals(object obj)
     {
-        if (ReferenceEquals(this, obj)) return true;
         if (obj is Frac other) return equalsCore(this, other);
         return false;
     }
@@ -339,7 +336,6 @@ public class Frac
 
     public static bool operator >(Frac a, Frac b)
     {
-        if (a is null || b is null) return false;
         bool aNaN = a.y.IsZero && a.x.IsZero;
         bool bNaN = b.y.IsZero && b.x.IsZero;
         if (aNaN || bNaN) return false;
@@ -348,7 +344,6 @@ public class Frac
 
     public static bool operator <(Frac a, Frac b)
     {
-        if (a is null || b is null) return false;
         bool aNaN = a.y.IsZero && a.x.IsZero;
         bool bNaN = b.y.IsZero && b.x.IsZero;
         if (aNaN || bNaN) return false;
@@ -357,7 +352,6 @@ public class Frac
 
     public static bool operator >=(Frac a, Frac b)
     {
-        if (a is null || b is null) return false;
         bool aNaN = a.y.IsZero && a.x.IsZero;
         bool bNaN = b.y.IsZero && b.x.IsZero;
         if (aNaN || bNaN) return false;
@@ -367,7 +361,6 @@ public class Frac
 
     public static bool operator <=(Frac a, Frac b)
     {
-        if (a is null || b is null) return false;
         bool aNaN = a.y.IsZero && a.x.IsZero;
         bool bNaN = b.y.IsZero && b.x.IsZero;
         if (aNaN || bNaN) return false;
