@@ -25,6 +25,7 @@ public class FracDebug : MonoBehaviour
         TestIsLegal();
         TestIsInteger();
         TestToStringMethod();
+        TestFromStringAndIsValidString();
         TestOperators();
         TestCompoundAssignments();
         TestComparisonOperators();
@@ -568,6 +569,50 @@ public class FracDebug : MonoBehaviour
 
         var g = new Frac(10, -2);
         AssertEqualString(g.ToString(), "-5", "ToString 10/-2");
+    }
+
+    private static void TestFromStringAndIsValidString()
+    {
+        AssertEqualBool(Frac.IsValidString("1/2"), true, "IsValidString 1/2");
+        AssertEqualBool(Frac.IsValidString("  1 /  2  "), true, "IsValidString spaces in fraction");
+        AssertEqualBool(Frac.IsValidString("3"), true, "IsValidString integer");
+        AssertEqualBool(Frac.IsValidString("-5"), true, "IsValidString negative integer");
+        AssertEqualBool(Frac.IsValidString("0.5"), true, "IsValidString decimal 0.5");
+        AssertEqualBool(Frac.IsValidString("-2.25"), true, "IsValidString decimal -2.25");
+        AssertEqualBool(Frac.IsValidString(" .5 "), true, "IsValidString decimal .5 with spaces");
+        AssertEqualBool(Frac.IsValidString("nan"), true, "IsValidString nan");
+        AssertEqualBool(Frac.IsValidString("+inf"), true, "IsValidString +inf");
+        AssertEqualBool(Frac.IsValidString("-inf"), true, "IsValidString -inf");
+
+        AssertEqualBool(Frac.IsValidString(""), false, "IsValidString empty string");
+        AssertEqualBool(Frac.IsValidString("   "), false, "IsValidString only spaces");
+        AssertEqualBool(Frac.IsValidString("abc"), false, "IsValidString letters");
+        AssertEqualBool(Frac.IsValidString("1//2"), false, "IsValidString double slash");
+        AssertEqualBool(Frac.IsValidString("/2"), false, "IsValidString missing numerator");
+        AssertEqualBool(Frac.IsValidString("1/"), false, "IsValidString missing denominator");
+        AssertEqualBool(Frac.IsValidString("1.2.3"), false, "IsValidString multiple dots");
+
+        AssertEqual(Frac.FromString("1/2"), new Frac(1, 2), "FromString 1/2");
+        AssertEqual(Frac.FromString("  1 /  2  "), new Frac(1, 2), "FromString spaces in fraction");
+        AssertEqual(Frac.FromString("3"), new Frac(3, 1), "FromString integer 3");
+        AssertEqual(Frac.FromString("-5"), new Frac(-5, 1), "FromString integer -5");
+        AssertEqual(Frac.FromString("0.5"), new Frac(1, 2), "FromString decimal 0.5");
+        AssertEqual(Frac.FromString("-2.25"), new Frac(-9, 4), "FromString decimal -2.25");
+        AssertEqual(Frac.FromString(".5"), new Frac(1, 2), "FromString decimal .5");
+        AssertEqual(Frac.FromString("nan"), new Frac(0, 0), "FromString nan");
+        AssertEqual(Frac.FromString("+inf"), new Frac(1, 0), "FromString +inf");
+        AssertEqual(Frac.FromString("-inf"), new Frac(-1, 0), "FromString -inf");
+
+        bool threwOnInvalid = false;
+        try
+        {
+            Frac.FromString("invalid");
+        }
+        catch
+        {
+            threwOnInvalid = true;
+        }
+        AssertEqualBool(threwOnInvalid, true, "FromString invalid string throws");
     }
 
     private static void TestOperators()

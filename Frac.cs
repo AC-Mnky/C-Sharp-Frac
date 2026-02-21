@@ -1,5 +1,7 @@
 using System;
+using System.Globalization;
 using System.Numerics;
+using System.Text;
 
 public static class BigIntegerExtensions
 {
@@ -302,6 +304,145 @@ public struct Frac
         }
 
         return x.ToString() + "/" + y.ToString();
+    }
+
+    private static string normalizeInputString(string s)
+    {
+        if (s == null) return null;
+        var builder = new StringBuilder(s.Length);
+        for (int i = 0; i < s.Length; i++)
+        {
+            var ch = s[i];
+            if (!char.IsWhiteSpace(ch))
+            {
+                builder.Append(ch);
+            }
+        }
+        return builder.ToString();
+    }
+
+    private static bool allDigits(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return false;
+        for (int i = 0; i < s.Length; i++)
+        {
+            var ch = s[i];
+            if (ch < '0' || ch > '9') return false;
+        }
+        return true;
+    }
+
+    private static bool tryParseCore(string s, out Frac result)
+    {
+        result = default;
+        if (s == null) return false;
+
+        var normalized = normalizeInputString(s);
+        if (string.IsNullOrEmpty(normalized)) return false;
+
+        if (normalized == "nan")
+        {
+            result = new Frac(0, 0, false);
+            return true;
+        }
+
+        if (normalized == "+inf")
+        {
+            result = new Frac(1, 0, false);
+            return true;
+        }
+
+        if (normalized == "-inf")
+        {
+            result = new Frac(-1, 0, false);
+            return true;
+        }
+
+        int slashIndex = normalized.IndexOf('/');
+        if (slashIndex >= 0)
+        {
+            if (normalized.IndexOf('/', slashIndex + 1) >= 0) return false;
+            var numeratorString = normalized.Substring(0, slashIndex);
+            var denominatorString = normalized.Substring(slashIndex + 1);
+            if (numeratorString.Length == 0 || denominatorString.Length == 0) return false;
+            try
+            {
+                var numerator = BigInteger.Parse(numeratorString, CultureInfo.InvariantCulture);
+                var denominator = BigInteger.Parse(denominatorString, CultureInfo.InvariantCulture);
+                result = new Frac(numerator, denominator);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        int dotIndex = normalized.IndexOf('.');
+        if (dotIndex >= 0)
+        {
+            if (normalized.IndexOf('.', dotIndex + 1) >= 0) return false;
+
+            bool isNegative = false;
+            string number = normalized;
+            if (number[0] == '+' || number[0] == '-')
+            {
+                isNegative = number[0] == '-';
+                number = number.Substring(1);
+            }
+
+            dotIndex = number.IndexOf('.');
+            if (dotIndex < 0) return false;
+
+            var integerPartString = number.Substring(0, dotIndex);
+            var fractionalPartString = number.Substring(dotIndex + 1);
+
+            if (integerPartString.Length == 0 && fractionalPartString.Length == 0) return false;
+            if (integerPartString.Length == 0) integerPartString = "0";
+            if (fractionalPartString.Length == 0) fractionalPartString = "0";
+
+            if (!allDigits(integerPartString) || !allDigits(fractionalPartString)) return false;
+
+            try
+            {
+                var integerPart = BigInteger.Parse(integerPartString, CultureInfo.InvariantCulture);
+                var fractionalPart = BigInteger.Parse(fractionalPartString, CultureInfo.InvariantCulture);
+                var denominator = BigInteger.Pow(new BigInteger(10), fractionalPartString.Length);
+                var numerator = integerPart * denominator + fractionalPart;
+                if (isNegative) numerator = -numerator;
+                result = new Frac(numerator, denominator);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        try
+        {
+            var integer = BigInteger.Parse(normalized, CultureInfo.InvariantCulture);
+            result = new Frac(integer);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool IsValidString(string s)
+    {
+        return tryParseCore(s, out _);
+    }
+
+    public static Frac FromString(string s)
+    {
+        if (tryParseCore(s, out var result))
+        {
+            return result;
+        }
+        throw new Exception("Frac.FromString invalid string");
     }
 
     public static bool operator ==(Frac a, Frac b)
