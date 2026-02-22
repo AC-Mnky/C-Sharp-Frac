@@ -618,6 +618,16 @@ public struct Frac : ISerializationCallbackReceiver
         return new Frac(value);
     }
 
+    public static implicit operator Frac(string value)
+    {
+        return FromString(value);
+    }
+
+    public static implicit operator string(Frac value)
+    {
+        return value.ToString();
+    }
+
     public void OnBeforeSerialize()
     {
         serialized = ToString();

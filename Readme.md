@@ -233,15 +233,21 @@ Frac 提供若干操作符重载，全部委托给前面定义的实例方法：
 隐式类型转换
 ------------
 
-Frac 定义了以下隐式转换运算符，使 `BigInteger` 和 `int` 可以在需要 `Frac` 的地方自动转换：
+Frac 定义了以下隐式转换运算符，使 `BigInteger`、`int` 和 `string` 可以在需要 `Frac` 的地方自动转换：
 
 - `implicit operator Frac(BigInteger value)`：将 `BigInteger` 隐式转换为 `Frac`（等价于 `new Frac(value)`）。
 - `implicit operator Frac(int value)`：将 `int` 隐式转换为 `Frac`（等价于 `new Frac(value)`）。
+- `implicit operator Frac(string value)`：将 `string` 隐式转换为 `Frac`（等价于 `Frac.FromString(value)`）。若字符串不合法，会抛出异常。
+- `implicit operator string(Frac value)`：将 `Frac` 隐式转换为 `string`（等价于 `value.ToString()`）。
 
 这意味着你可以直接写：
 
 - `Frac a = 5;`（int → Frac）
 - `Frac b = (BigInteger)123;`（BigInteger → Frac）
+- `Frac c = "1/2";`（string → Frac，得到 1/2）
+- `Frac d = "0.5";`（string → Frac，得到 1/2）
+- `Frac e = "+inf";`（string → Frac，得到正无穷）
+- `string s = new Frac(1, 2);`（Frac → string，得到 `"1/2"`）
 - `new Frac(1, 2) + 1`（int 自动转换后参与运算）
 - `3 * new Frac(1, 2)`（int 自动转换后参与运算）
 

@@ -879,6 +879,59 @@ public class FracDebug : MonoBehaviour
         AssertEqualBool(new Frac(5) == 5, true, "Frac == implicit int");
         AssertEqualBool(new Frac(3, 2) > 1, true, "Frac > implicit int");
         AssertEqualBool(0 < new Frac(1, 2), true, "implicit int < Frac");
+
+        Frac fromStr1 = "1/2";
+        AssertEqual(fromStr1, new Frac(1, 2), "implicit string \"1/2\" -> Frac");
+
+        Frac fromStr2 = "-5/3";
+        AssertEqual(fromStr2, new Frac(-5, 3), "implicit string \"-5/3\" -> Frac");
+
+        Frac fromStr3 = "42";
+        AssertEqual(fromStr3, new Frac(42), "implicit string \"42\" -> Frac");
+
+        Frac fromStr4 = "0.5";
+        AssertEqual(fromStr4, new Frac(1, 2), "implicit string \"0.5\" -> Frac");
+
+        Frac fromStr5 = "-2.25";
+        AssertEqual(fromStr5, new Frac(-9, 4), "implicit string \"-2.25\" -> Frac");
+
+        Frac fromStr6 = "+inf";
+        AssertEqual(fromStr6, new Frac(1, 0), "implicit string \"+inf\" -> Frac");
+
+        Frac fromStr7 = "-inf";
+        AssertEqual(fromStr7, new Frac(-1, 0), "implicit string \"-inf\" -> Frac");
+
+        Frac fromStr8 = "nan";
+        AssertEqualString(fromStr8.ToString(), "nan", "implicit string \"nan\" -> Frac");
+
+        bool threwOnInvalidStr = false;
+        try
+        {
+            Frac invalid = "abc";
+        }
+        catch
+        {
+            threwOnInvalidStr = true;
+        }
+        AssertEqualBool(threwOnInvalidStr, true, "implicit string invalid throws");
+
+        string toStr1 = new Frac(1, 2);
+        AssertEqualString(toStr1, "1/2", "implicit Frac -> string 1/2");
+
+        string toStr2 = new Frac(3);
+        AssertEqualString(toStr2, "3", "implicit Frac -> string 3");
+
+        string toStr3 = new Frac(-5, 3);
+        AssertEqualString(toStr3, "-5/3", "implicit Frac -> string -5/3");
+
+        string toStr4 = new Frac(1, 0);
+        AssertEqualString(toStr4, "+inf", "implicit Frac -> string +inf");
+
+        string toStr5 = new Frac(-1, 0);
+        AssertEqualString(toStr5, "-inf", "implicit Frac -> string -inf");
+
+        string toStr6 = new Frac(0, 0);
+        AssertEqualString(toStr6, "nan", "implicit Frac -> string nan");
     }
 }
 
