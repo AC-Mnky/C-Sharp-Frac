@@ -39,7 +39,8 @@ public class FracDebug : MonoBehaviour
         TestCompoundAssignments();
         TestComparisonOperators();
         TestToDoubleAndFloat();
-        TestToBigIntegerConversion();
+        TestToFloorAndToCeil();
+        TestImplicitConversions();
     }
 
     public void Update()
@@ -789,80 +790,95 @@ public class FracDebug : MonoBehaviour
         AssertEqualFloat(nan.ToFloat(), float.NaN, "ToFloat nan");
     }
 
-    private static void TestToBigIntegerConversion()
+    private static void AssertEqualBigInteger(BigInteger actual, BigInteger expected, string message)
     {
-        var a = new Frac(5);
-        if (a.ToBigInteger() != new BigInteger(5))
+        if (actual != expected)
         {
-            throw new Exception("ToBigInteger integer 5");
+            throw new Exception("FracDebug BigInteger not equal: " + message + ", expected " + expected + ", actual " + actual);
         }
+    }
 
-        var b = new Frac(5, 3);
-        if (b.ToBigInteger() != new BigInteger(1))
-        {
-            throw new Exception("ToBigInteger 5/3 -> 1");
-        }
+    private static void TestToFloorAndToCeil()
+    {
+        // ToFloor
+        AssertEqualBigInteger(new Frac(5).ToFloor(), 5, "ToFloor integer 5");
+        AssertEqualBigInteger(new Frac(5, 3).ToFloor(), 1, "ToFloor 5/3 -> 1");
+        AssertEqualBigInteger(new Frac(-5, 3).ToFloor(), -2, "ToFloor -5/3 -> -2");
+        AssertEqualBigInteger(new Frac(1, 2).ToFloor(), 0, "ToFloor 1/2 -> 0");
+        AssertEqualBigInteger(new Frac(-1, 2).ToFloor(), -1, "ToFloor -1/2 -> -1");
+        AssertEqualBigInteger(new Frac(0, 1).ToFloor(), 0, "ToFloor 0 -> 0");
+        AssertEqualBigInteger(new Frac(4, 2).ToFloor(), 2, "ToFloor 4/2 -> 2");
+        AssertEqualBigInteger(new Frac(-4, 2).ToFloor(), -2, "ToFloor -4/2 -> -2");
+        AssertEqualBigInteger(new Frac(7, 3).ToFloor(), 2, "ToFloor 7/3 -> 2");
+        AssertEqualBigInteger(new Frac(-7, 3).ToFloor(), -3, "ToFloor -7/3 -> -3");
 
-        var c = new Frac(-5, 3);
-        if (c.ToBigInteger() != new BigInteger(-2))
-        {
-            throw new Exception("ToBigInteger -5/3 -> -2");
-        }
+        // ToCeil
+        AssertEqualBigInteger(new Frac(5).ToCeil(), 5, "ToCeil integer 5");
+        AssertEqualBigInteger(new Frac(5, 3).ToCeil(), 2, "ToCeil 5/3 -> 2");
+        AssertEqualBigInteger(new Frac(-5, 3).ToCeil(), -1, "ToCeil -5/3 -> -1");
+        AssertEqualBigInteger(new Frac(1, 2).ToCeil(), 1, "ToCeil 1/2 -> 1");
+        AssertEqualBigInteger(new Frac(-1, 2).ToCeil(), 0, "ToCeil -1/2 -> 0");
+        AssertEqualBigInteger(new Frac(0, 1).ToCeil(), 0, "ToCeil 0 -> 0");
+        AssertEqualBigInteger(new Frac(4, 2).ToCeil(), 2, "ToCeil 4/2 -> 2");
+        AssertEqualBigInteger(new Frac(-4, 2).ToCeil(), -2, "ToCeil -4/2 -> -2");
+        AssertEqualBigInteger(new Frac(7, 3).ToCeil(), 3, "ToCeil 7/3 -> 3");
+        AssertEqualBigInteger(new Frac(-7, 3).ToCeil(), -2, "ToCeil -7/3 -> -2");
 
-        var d = new Frac(1, 2);
-        if (d.ToBigInteger() != new BigInteger(0))
-        {
-            throw new Exception("ToBigInteger 1/2 -> 0");
-        }
-
-        var e = new Frac(-1, 2);
-        if (e.ToBigInteger() != new BigInteger(-1))
-        {
-            throw new Exception("ToBigInteger -1/2 -> -1");
-        }
-
-        var zero = new Frac(0, 1);
-        if (zero.ToBigInteger() != BigInteger.Zero)
-        {
-            throw new Exception("ToBigInteger 0 -> 0");
-        }
-
+        // ToFloor/ToCeil on non-finite values should throw
         var posInf = new Frac(1, 0);
         var negInf = new Frac(-1, 0);
         var nan = new Frac(0, 0);
 
-        var threwPosInf = false;
-        try
-        {
-            posInf.ToBigInteger();
-        }
-        catch
-        {
-            threwPosInf = true;
-        }
-        AssertEqualBool(threwPosInf, true, "ToBigInteger +inf throws");
+        var threwFloorPosInf = false;
+        try { posInf.ToFloor(); } catch { threwFloorPosInf = true; }
+        AssertEqualBool(threwFloorPosInf, true, "ToFloor +inf throws");
 
-        var threwNegInf = false;
-        try
-        {
-            negInf.ToBigInteger();
-        }
-        catch
-        {
-            threwNegInf = true;
-        }
-        AssertEqualBool(threwNegInf, true, "ToBigInteger -inf throws");
+        var threwFloorNegInf = false;
+        try { negInf.ToFloor(); } catch { threwFloorNegInf = true; }
+        AssertEqualBool(threwFloorNegInf, true, "ToFloor -inf throws");
 
-        var threwNan = false;
-        try
-        {
-            nan.ToBigInteger();
-        }
-        catch
-        {
-            threwNan = true;
-        }
-        AssertEqualBool(threwNan, true, "ToBigInteger nan throws");
+        var threwFloorNan = false;
+        try { nan.ToFloor(); } catch { threwFloorNan = true; }
+        AssertEqualBool(threwFloorNan, true, "ToFloor nan throws");
+
+        var threwCeilPosInf = false;
+        try { posInf.ToCeil(); } catch { threwCeilPosInf = true; }
+        AssertEqualBool(threwCeilPosInf, true, "ToCeil +inf throws");
+
+        var threwCeilNegInf = false;
+        try { negInf.ToCeil(); } catch { threwCeilNegInf = true; }
+        AssertEqualBool(threwCeilNegInf, true, "ToCeil -inf throws");
+
+        var threwCeilNan = false;
+        try { nan.ToCeil(); } catch { threwCeilNan = true; }
+        AssertEqualBool(threwCeilNan, true, "ToCeil nan throws");
+    }
+
+    private static void TestImplicitConversions()
+    {
+        Frac fromInt = 42;
+        AssertEqual(fromInt, new Frac(42), "implicit int -> Frac");
+
+        Frac fromNegInt = -7;
+        AssertEqual(fromNegInt, new Frac(-7), "implicit negative int -> Frac");
+
+        Frac fromZeroInt = 0;
+        AssertEqual(fromZeroInt, new Frac(0), "implicit int 0 -> Frac");
+
+        Frac fromBigInt = (BigInteger)123456789;
+        AssertEqual(fromBigInt, new Frac(123456789), "implicit BigInteger -> Frac");
+
+        Frac a = new Frac(1, 2);
+        AssertEqual(a + 1, new Frac(3, 2), "Frac + implicit int");
+        AssertEqual(1 + a, new Frac(3, 2), "implicit int + Frac");
+        AssertEqual(a - 1, new Frac(-1, 2), "Frac - implicit int");
+        AssertEqual(1 - a, new Frac(1, 2), "implicit int - Frac");
+        AssertEqual(a * 3, new Frac(3, 2), "Frac * implicit int");
+        AssertEqual(3 * a, new Frac(3, 2), "implicit int * Frac");
+
+        AssertEqualBool(new Frac(5) == 5, true, "Frac == implicit int");
+        AssertEqualBool(new Frac(3, 2) > 1, true, "Frac > implicit int");
+        AssertEqualBool(0 < new Frac(1, 2), true, "implicit int < Frac");
     }
 }
 

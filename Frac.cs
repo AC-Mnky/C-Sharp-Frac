@@ -228,29 +228,33 @@ public struct Frac : ISerializationCallbackReceiver
         return (float)ToDouble();
     }
 
-    public BigInteger ToBigInteger()
+    public BigInteger ToFloor()
     {
         if (!IsLegal())
         {
-            throw new Exception("Frac.ToBigInteger called on non-finite value");
-        }
-
-        if (IsInteger())
-        {
-            return x;
+            throw new Exception("Frac.ToFloor called on non-finite value");
         }
 
         var quotient = BigInteger.DivRem(x, y, out var remainder);
         if (remainder.IsZero)
-        {
             return quotient;
-        }
-
         if (x.Sign < 0)
-        {
             return quotient - BigInteger.One;
+        return quotient;
+    }
+
+    public BigInteger ToCeil()
+    {
+        if (!IsLegal())
+        {
+            throw new Exception("Frac.ToCeil called on non-finite value");
         }
 
+        var quotient = BigInteger.DivRem(x, y, out var remainder);
+        if (remainder.IsZero)
+            return quotient;
+        if (x.Sign > 0)
+            return quotient + BigInteger.One;
         return quotient;
     }
 
@@ -602,6 +606,16 @@ public struct Frac : ISerializationCallbackReceiver
     public static Frac operator *(BigInteger a, Frac b)
     {
         return b.Mul(a);
+    }
+
+    public static implicit operator Frac(BigInteger value)
+    {
+        return new Frac(value);
+    }
+
+    public static implicit operator Frac(int value)
+    {
+        return new Frac(value);
     }
 
     public void OnBeforeSerialize()

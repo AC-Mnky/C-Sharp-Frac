@@ -158,11 +158,15 @@ Frac 是一个基于 `System.Numerics.BigInteger` 的有理数类型，支持无
   - 等价于对 `ToDouble()` 的结果再做一次 `(float)` 强制转换。
   - 同样会将 `+inf/-inf/nan` 映射到对应的 `float` 特殊值。
 
-- `BigInteger ToBigInteger()`  
+- `BigInteger ToFloor()`  
   - 仅对有限值定义（`IsLegal() == true`），否则抛出异常。
-  - 若 `IsInteger() == true`，直接返回分子 `x`。
-  - 若不是整数，则返回向负无穷取整后的结果：
-    - 例如 `5/3` → `1`，`-5/3` → `-2`，`-1/2` → `-1`。
+  - 返回不大于当前值的最大整数（向负无穷取整）：
+    - 例如 `5/3` → `1`，`-5/3` → `-2`，`1/2` → `0`，`-1/2` → `-1`。
+
+- `BigInteger ToCeil()`  
+  - 仅对有限值定义（`IsLegal() == true`），否则抛出异常。
+  - 返回不小于当前值的最小整数（向正无穷取整）：
+    - 例如 `5/3` → `2`，`-5/3` → `-1`，`1/2` → `1`，`-1/2` → `0`。
 
 字符串表示
 ----------
@@ -225,6 +229,21 @@ Frac 提供若干操作符重载，全部委托给前面定义的实例方法：
   - 同时提供 `Frac` 与 `BigInteger` 之间的 `==, !=, >, <, >=, <=` 运算符，方便写出 `frac > 1`、`2 <= frac` 等表达式。
 
 在 C# 中，`+=`、`-=`、`*=` 等复合赋值运算会自动使用上面的 `+`、`-`、`*` 运算符，因此本类型无需额外定义 `operator +=` 等函数即可直接使用，例如 `a += b`、`a *= (BigInteger)2`。注意本类型没有支持除法复合赋值 `/=`。
+
+隐式类型转换
+------------
+
+Frac 定义了以下隐式转换运算符，使 `BigInteger` 和 `int` 可以在需要 `Frac` 的地方自动转换：
+
+- `implicit operator Frac(BigInteger value)`：将 `BigInteger` 隐式转换为 `Frac`（等价于 `new Frac(value)`）。
+- `implicit operator Frac(int value)`：将 `int` 隐式转换为 `Frac`（等价于 `new Frac(value)`）。
+
+这意味着你可以直接写：
+
+- `Frac a = 5;`（int → Frac）
+- `Frac b = (BigInteger)123;`（BigInteger → Frac）
+- `new Frac(1, 2) + 1`（int 自动转换后参与运算）
+- `3 * new Frac(1, 2)`（int 自动转换后参与运算）
 
 示例
 ----
