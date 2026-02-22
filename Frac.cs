@@ -2,6 +2,10 @@ using System;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
+using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public static class BigIntegerExtensions
 {
@@ -43,27 +47,30 @@ public static class BigIntegerExtensions
     }
 }
 
-public struct Frac
+[Serializable]
+public struct Frac : ISerializationCallbackReceiver
 {
     // 所有public方法输出的Frac对象都保证分母非负且与分子互素
+    [NonSerialized]
     private BigInteger x;
+    [NonSerialized]
     private BigInteger y;
+    [SerializeField]
+    private string serialized;
 
     private void simplify()
     {
         var gcd = BigIntegerExtensions.GCD(x, y);
-        if (gcd.IsZero)
+        if (!gcd.IsZero)
         {
-            return;
-        }
+            x /= gcd;
+            y /= gcd;
 
-        x /= gcd;
-        y /= gcd;
-
-        if (y.Sign < 0)
-        {
-            x = -x;
-            y = -y;
+            if (y.Sign < 0)
+            {
+                x = -x;
+                y = -y;
+            }
         }
     }
 
@@ -91,12 +98,14 @@ public struct Frac
     {
         this.x = x;
         this.y = 1;
+        serialized = null;
     }
 
     public Frac(BigInteger x, BigInteger y)
     {
         this.x = x;
         this.y = y;
+        serialized = null;
         simplify();
     }
 
@@ -104,6 +113,7 @@ public struct Frac
     {
         this.x = x;
         this.y = y;
+        serialized = null;
         if (shouldSimplify)
         {
             simplify();
@@ -593,4 +603,96 @@ public struct Frac
     {
         return b.Mul(a);
     }
+
+    public void OnBeforeSerialize()
+    {
+        serialized = ToString();
+    }
+
+    public void OnAfterDeserialize()
+    {
+        if (IsValidString(serialized))
+        {
+            var value = FromString(serialized);
+            x = value.x;
+            y = value.y;
+        }
+        else
+        {
+            x = BigInteger.Zero;
+            y = BigInteger.Zero;
+            serialized = "nan";
+        }
+    }
 }
+
+#if UNITY_EDITOR
+[CustomPropertyDrawer(typeof(Frac))]
+public class FracDrawer : PropertyDrawer
+{
+    private string currentStringValue;
+    private bool isValid = true;
+
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        var serializedProp = property.FindPropertyRelative("serialized");
+        string baseText = serializedProp != null ? serializedProp.stringValue : string.Empty;
+        if (isValid)
+        {
+            currentStringValue = baseText;
+        }
+
+        EditorGUI.BeginProperty(position, label, property);
+
+        Rect labelRect = new Rect(position.x, position.y, EditorGUIUtility.labelWidth, position.height);
+        EditorGUI.LabelField(labelRect, label);
+
+        Rect fieldRect = new Rect(position.x + EditorGUIUtility.labelWidth, position.y, position.width - EditorGUIUtility.labelWidth, position.height);
+
+        Color originalColor = GUI.color;
+        if (!isValid)
+        {
+            GUI.color = Color.red;
+        }
+
+        EditorGUI.BeginChangeCheck();
+        string newStringValue = EditorGUI.TextField(fieldRect, currentStringValue);
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            bool newValid = Frac.IsValidString(newStringValue);
+            if (newValid)
+            {
+                isValid = true;
+                currentStringValue = newStringValue;
+                if (serializedProp != null)
+                {
+                    serializedProp.stringValue = newStringValue;
+                }
+                Frac newValue = Frac.FromString(newStringValue);
+                SetCurrentValue(property, newValue);
+            }
+            else
+            {
+                isValid = false;
+                currentStringValue = newStringValue;
+            }
+        }
+
+        GUI.color = originalColor;
+        EditorGUI.EndProperty();
+    }
+
+    private void SetCurrentValue(SerializedProperty property, Frac value)
+    {
+        var targetObject = property.serializedObject.targetObject;
+        var targetType = targetObject.GetType();
+        var field = targetType.GetField(property.propertyPath);
+        if (field != null)
+        {
+            field.SetValue(targetObject, value);
+            property.serializedObject.ApplyModifiedProperties();
+        }
+    }
+}
+#endif

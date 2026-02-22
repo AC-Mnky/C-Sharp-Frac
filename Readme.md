@@ -257,3 +257,13 @@ Frac 提供若干操作符重载，全部委托给前面定义的实例方法：
 - `new Frac(-1, 0).ToString()` → `"-inf"`
 - `new Frac(0, 0).ToString()` → `"nan"`
 
+Unity 集成
+----------
+
+- 在 Unity 中，`Frac` 被标记为可序列化类型，并实现了 `ISerializationCallbackReceiver`，内部使用 `ToString()` 的结果进行保存。
+- 在任意 `MonoBehaviour` 中声明 `public Frac value;` 或 `public Frac[] values;`，即可在 Inspector 中通过单行文本输入来编辑该值。
+- Inspector 中的输入会通过 `Frac.IsValidString` 进行校验：
+  - 若字符串合法，则调用 `Frac.FromString` 解析并更新实际值，同时更新内部序列化字符串；
+  - 若字符串不合法，输入框会以红色高亮显示，实际的 `Frac` 值保持为上一次的合法值，不会写入无效数据。
+- 由于序列化完全基于字符串形式，场景与预制体在保存、加载以及版本控制时都能保持可读性和稳定性。
+

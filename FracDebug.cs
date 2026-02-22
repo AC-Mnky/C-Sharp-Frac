@@ -2,8 +2,16 @@ using System;
 using System.Numerics;
 using UnityEngine;
 
+[System.Serializable]
 public class FracDebug : MonoBehaviour
 {
+    public int x = 1;
+    public int y = 1;
+    public Frac inspectorValue1 = new Frac(1);
+    public Frac inspectorValue2 = new Frac(1);
+    public Frac inspectorValue3 = new Frac(1);
+    public Frac inspectorValue4 = new Frac(1);
+
     void Start()
     {
         RunAll();
@@ -26,11 +34,19 @@ public class FracDebug : MonoBehaviour
         TestIsInteger();
         TestToStringMethod();
         TestFromStringAndIsValidString();
+        TestToStringFromStringRoundTrip();
         TestOperators();
         TestCompoundAssignments();
         TestComparisonOperators();
         TestToDoubleAndFloat();
         TestToBigIntegerConversion();
+    }
+
+    public void Update()
+    {
+        y = x;
+        inspectorValue3 = inspectorValue1 + inspectorValue2 + x;
+        inspectorValue4 = inspectorValue4 + x;
     }
 
     private static void AssertEqual(Frac actual, Frac expected, string message)
@@ -613,6 +629,27 @@ public class FracDebug : MonoBehaviour
             threwOnInvalid = true;
         }
         AssertEqualBool(threwOnInvalid, true, "FromString invalid string throws");
+    }
+
+    private static void TestToStringFromStringRoundTrip()
+    {
+        var values = new[]
+        {
+            new Frac(0, 1),
+            new Frac(1, 2),
+            new Frac(-5, 3),
+            new Frac(1, 0),
+            new Frac(-1, 0),
+            new Frac(0, 0)
+        };
+
+        for (int i = 0; i < values.Length; i++)
+        {
+            var original = values[i];
+            var s = original.ToString();
+            var parsed = Frac.FromString(s);
+            AssertEqual(parsed, original, "ToString/FromString roundtrip " + s);
+        }
     }
 
     private static void TestOperators()
