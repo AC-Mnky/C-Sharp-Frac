@@ -295,9 +295,9 @@ public struct Frac : ISerializationCallbackReceiver
     {
         unchecked
         {
-            int hash = 17;
-            hash = hash * 31 + x.GetHashCode();
-            hash = hash * 31 + y.GetHashCode();
+            int hash = (int)2166136261;
+            hash = (hash ^ x.GetHashCode()) * 16777619;
+            hash = (hash ^ y.GetHashCode()) * 16777619;
             return hash;
         }
     }
