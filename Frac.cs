@@ -48,7 +48,7 @@ public static class BigIntegerExtensions
 }
 
 [Serializable]
-public struct Frac : ISerializationCallbackReceiver
+public struct Frac : ISerializationCallbackReceiver, IComparable, IComparable<Frac>
 {
     // 所有public方法输出的Frac对象都保证分母非负且与分子互素
     [NonSerialized]
@@ -283,6 +283,22 @@ public struct Frac : ISerializationCallbackReceiver
         var left = a.x * b.y;
         var right = b.x * a.y;
         return left.CompareTo(right);
+    }
+
+    public int CompareTo(Frac other)
+    {
+        if (IsNaN() || other.IsNaN())
+        {
+            throw new InvalidOperationException("Frac.CompareTo is undefined for NaN");
+        }
+        return compareNonNaN(this, other);
+    }
+
+    public int CompareTo(object obj)
+    {
+        if (obj == null) return 1;
+        if (obj is Frac other) return CompareTo(other);
+        throw new ArgumentException("Object must be of type Frac", nameof(obj));
     }
 
     public override bool Equals(object obj)
